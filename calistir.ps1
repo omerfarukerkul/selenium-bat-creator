@@ -35,7 +35,17 @@ $DownloadUrl = "https://chromedriver.storage.googleapis.com/$WebResponse/chromed
 $output = "$filePath\chromeDriver.zip"
 (New-Object System.Net.WebClient).DownloadFile($DownloadUrl, $output)
 
-if ($PSVersionTable.PSVersion.ToString().split(".", 2).get(0) -ge 5) { Expand-Archive -path $output -destinationpath $filePath }
+if ($PSVersionTable.PSVersion.ToString().split(".", 2).get(0) -ge 5) { Expand-Archive -path $output -destinationpath $filePath -Force }
+
+##Bat dosyasi yazdir.
+$text = 'SETLOCAL
+SET JAVA_TOOL_OPTIONS=
+SET _JAVA_OPTIONS=
+java -Dwebdriver.chrome.driver=\`"chromedriver.exe\`" -jar selenium-server-standalone-3.12.0.jar -role node -port 1453 -hub http://10.210.32.53:4444/grid/register
+if  %ERRORLEVEL% == 1 pause
+ENDLOCAL'
+
+$text | Out-File  "$filePath\seleniumBat.bat" -Encoding oem -Force
 
 ##Zip dosyasini sil
 Remove-Item $filePath\* -Include *.zip
@@ -45,16 +55,7 @@ $SeleniumJarUrl = "https://selenium-release.storage.googleapis.com/3.12/selenium
 $output = "$filePath\selenium-server-standalone-3.12.0.jar"
 (New-Object System.Net.WebClient).DownloadFile($SeleniumJarUrl, $output)
 
-##Bat dosyasi yazdir.
-$text = "
-SETLOCAL
-SET JAVA_TOOL_OPTIONS= 
-SET _JAVA_OPTIONS= 
-java -Dwebdriver.chrome.driver='chromedriver.exe' -jar selenium-server-standalone-3.12.0.jar -role node -port 1453 -hub http://10.210.32.53:4444/grid/register
-if  %ERRORLEVEL% == 1 pause
-ENDLOCAL"
 
-$text | Out-File  "$filePath\seleniumBat.bat" 
 
 # Get current config Jenkins
 ###curl -X GET http://developer:developer@localhost:8080/job/test/config.xml -o mylocalconfig.xml
