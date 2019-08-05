@@ -1,107 +1,60 @@
 Clear-Host
+#masaustunde yeni klasor olusturup icerisine cd ile gidilir.
 function Set-FolderSavePath {
-    #[Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
-    Add-Type -AssemblyName System.Windows.Forms
-    #[System.Windows.Forms.Application]::EnableVisualStyles()
-    $browse = New-Object System.Windows.Forms.FolderBrowserDialog
-    $browse.ShowNewFolderButton = $true
-    $browse.Description = "Dosyalari kaydedecek dizini Secin"
-    $browse.RootFolder = "Desktop"
-    $browse.SelectedPath = $browse.RootFolder
-
-    $loop = $true
-    while ($loop) {
-        if ($browse.ShowDialog() -eq "OK") {
-            $loop = $false
-            Set-Location -Path $browse.SelectedPath
-        }
-        else {
-            Add-Type -AssemblyName Microsoft.VisualBasic
-            $res = [Microsoft.VisualBasic.Interaction]::MsgBox('Islemi Iptal Ettiniz.', 'RetryCancel,SystemModal,Information', 'Dosya yolu belirle')
-            if ($res -eq "Cancel") {
-                #Ends script
-                return 1
-            }
-        }
-    }
-    $browse.SelectedPath
-    $browse.Dispose()
+    $browse = "$HOME\Desktop\otomasyon"
+    New-Item -Type directory -Path $browse -Force | Out-Null
+    Set-Location -Path $browse
+    $browse
 }
 
+#userLdap ve hostname bilgilerinin alinmasi.
 function Get-UserLdapAndHostname {
-    Add-Type -AssemblyName System.Windows.Forms
-    Add-Type -AssemblyName System.Drawing
-
-    $form = New-Object System.Windows.Forms.Form
-    $form.Text = 'Kullanici LDAP bilgisi.'
-    $form.Size = New-Object System.Drawing.Size(300, 200)
-    $form.StartPosition = 'CenterScreen'
-
-    $OKButton = New-Object System.Windows.Forms.Button
-    $OKButton.Location = New-Object System.Drawing.Point(75, 120)
-    $OKButton.Size = New-Object System.Drawing.Size(75, 23)
-    $OKButton.Text = 'Tamam'
-    $OKButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
-    $form.AcceptButton = $OKButton
-    $form.Controls.Add($OKButton)
-
-    $CancelButton = New-Object System.Windows.Forms.Button
-    $CancelButton.Location = New-Object System.Drawing.Point(150, 120)
-    $CancelButton.Size = New-Object System.Drawing.Size(75, 23)
-    $CancelButton.Text = 'Iptal'
-    $CancelButton.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
-    $form.CancelButton = $CancelButton
-    $form.Controls.Add($CancelButton)
-
-    $label = New-Object System.Windows.Forms.Label
-    $label.Location = New-Object System.Drawing.Point(10, 20)
-    $label.Size = New-Object System.Drawing.Size(280, 20)
-    $label.Text = 'Lutfen Kullanici LDAP Bilgisini Giriniz:'
-    $form.Controls.Add($label)
-
-    $textBox = New-Object System.Windows.Forms.TextBox
-    $textBox.Location = New-Object System.Drawing.Point(10, 40)
-    $textBox.Size = New-Object System.Drawing.Size(260, 20)
-    $textBox.Text = $env:USERNAME
-    $form.Controls.Add($textBox)
-
-    $form.Topmost = $True
-    $form.MaximizeBox = $False
-    $form.MinimizeBox = $False
-    $form.FormBorderStyle = 'Fixed3D'
-
-    $form.Add_Shown( { $textBox.Select() })
-    $result = $form.ShowDialog()
-
-    if ($result -eq "OK") {
-        $hostname = [System.Net.Dns]::GetHostName()
-        $data = $textBox.Text.ToUpper(), $hostname
-        $data
-    }
+    $hostname = [System.Net.Dns]::GetHostName()
+    $data = $env:USERNAME, $hostname
+    $data
 }
 
 $userData = Get-UserLdapAndHostname  #Array[0] = LDAP , Array[1] = hostname
-$filePath = Set-FolderSavePath
+$filePath = Set-FolderSavePath       #otomasyon klasörü yoksa olusturur varsa otomasyon-yeni adinda klasor olusturur.
 
+##TODO Chrome Versiyonunun ogrenilmesi ve gereken formata getirilmesi.
+$chromeVersion = (Get-Item (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe').'(Default)').VersionInfo.ProductVersion
+$chromeVersion = $chromeVersion.ToCharArray()
+[array]::Reverse($chromeVersion)
+$chromeVersion = -join ($chromeVersion)
+$chromeVersion = $chromeVersion.Split(".", 2)
+$chromeVersion = $chromeVersion.Get(1)
+$chromeVersion = $chromeVersion.ToCharArray()
+[array]::Reverse($chromeVersion)
+$chromeVersion = -join ($chromeVersion)
 
-##TODO Onceki Islemleri yap
+#Chrome driver'i halihazirdaki chrome versiyonuna gore indirilir.
+$WebResponse = Invoke-WebRequest "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$chromeVersion" 
+$WebResponse = $WebResponse.Content
+$DownloadUrl = "https://chromedriver.storage.googleapis.com/$WebResponse/chromedriver_win32.zip"
+$output = "$filePath\chromeDriver.zip"
+(New-Object System.Net.WebClient).DownloadFile($DownloadUrl, $output)
 
-
-##TODO Bat dosyasi yazdir.
-$text = "get sample Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-Integer imperdiet consectetur eros a posuere.
-Sed rutrum suscipit posuere. In sed massa dui. Nullam nec nulla a tellus fermentum feugiat.
-Nullam eu purus nec est consectetur tincidunt eget eget leo. Interdum et malesuada fames ac ante ipsum primis in faucibus.
-Morbi arcu urna, pretium vitae finibus at, fermentum quis felis.
-Duis ut neque condimentum, fringilla nulla non, dictum risus.
-Praesent lobortis ullamcorper felis, eu efficitur eros imperdiet vel.
-Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae;"
-$text | Out-File "$filePath\seleniumBat.bat" 
-
+if ($PSVersionTable.PSVersion.ToString().split(".", 2).get(0) -ge 5) { Expand-Archive -path $output -destinationpath $filePath }
 
 ##Zip dosyasini sil
 Remove-Item $filePath\* -Include *.zip
 
+#Selenium jar dosyasi indirilir.
+$SeleniumJarUrl = "https://selenium-release.storage.googleapis.com/3.12/selenium-server-standalone-3.12.0.jar"
+$output = "$filePath\selenium-server-standalone-3.12.0.jar"
+(New-Object System.Net.WebClient).DownloadFile($SeleniumJarUrl, $output)
+
+##Bat dosyasi yazdir.
+$text = "
+SETLOCAL
+SET JAVA_TOOL_OPTIONS= 
+SET _JAVA_OPTIONS= 
+java -Dwebdriver.chrome.driver='chromedriver.exe' -jar selenium-server-standalone-3.12.0.jar -role node -port 1453 -hub http://10.210.32.53:4444/grid/register
+if  %ERRORLEVEL% == 1 pause
+ENDLOCAL"
+
+$text | Out-File  "$filePath\seleniumBat.bat" 
 
 # Get current config Jenkins
 ###curl -X GET http://developer:developer@localhost:8080/job/test/config.xml -o mylocalconfig.xml
