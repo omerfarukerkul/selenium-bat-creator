@@ -60,7 +60,12 @@ $java8Url = "https://javadl.oracle.com/webapps/download/AutoDL?BundleId=239858_2
 $output = "$filePath\jre-8u221-windows-x64.exe"
 (New-Object System.Net.WebClient).DownloadFile($java8Url, $output)
 #Java 8 kurulur.
-Start-Process $output -Args '/s INSTALL_SILENT=1 STATIC=0 AUTO_UPDATE=0 WEB_JAVA=1 WEB_JAVA_SECURITY_LEVEL=H WEB_ANALYTICS=0 EULA=0 REBOOT=0 NOSTARTMENU=0 SPONSORS=0 /L "$env:TEMP\jre-8u45-windows-x64.log"'
+Start-Job -Name InstallJava -ScriptBlock {
+    & Start-Process $output -Args '/s INSTALL_SILENT=1 STATIC=0 AUTO_UPDATE=0 WEB_JAVA=1 WEB_JAVA_SECURITY_LEVEL=H WEB_ANALYTICS=0 EULA=0 REBOOT=0 NOSTARTMENU=0 SPONSORS=0 /L "$env:TEMP\jre-8u45-windows-x64.log"'
+    Write-Output $LASTEXITCODE
+}
+Get-Job -Name InstallJava | Wait-Job | Receive-Job
+
 
 # Get current config Jenkins
 ###curl -X GET http://developer:developer@localhost:8080/job/test/config.xml -o mylocalconfig.xml
