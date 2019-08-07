@@ -129,7 +129,7 @@ function Setup-Java([string] $filePath) {
 $userData = Get-UserLdapAndHostname  #Array[0] = LDAP , Array[1] = hostname
 $userLdap = $userData[0]
 $userHostName = $userData[1]
-$jobRequest = "EXT0248898"  #$userLdap`_QaSelenium
+$jobRequest = $userLdap  #$userLdap`_QaSelenium
 $jobResponse = Request-JenkinsXml $jobRequest $userHostName
 
 $filePath = Set-FolderSavePath       #otomasyon klasörü olusturur
@@ -140,9 +140,3 @@ if (!((Get-Command java | Select-Object -ExpandProperty Version).tostring() -mat
     $setupJava = Setup-Java($filePath)
 }
 $downloadSeleniumJar = Download-SeleniumJar($filePath)
-
-# Get current config Jenkins
-###curl -X GET http://MAYA10:113aea2aae91d13fbed3fba5f9d15eab0c@localhost:8080/job/test/config.xml -o mylocalconfig.xml
-
-# Post updated config Jenkins
-###curl -X POST http://developer:developer@localhost:8080/job/test/config.xml --data-binary "@mymodifiedlocalconfig.xml"
