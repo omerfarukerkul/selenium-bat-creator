@@ -14,6 +14,39 @@ function Get-UserLdapAndHostname {
     $data
 }
 
+function Request-JenkinsXml([string]$jobUrl) {
+    # Fill in the blanks
+    $UserName = "MAYA10"
+    $JenkinsAPIToken = "116f76f5227da692c1167e670480576dfa"
+    $JENKINS_URL = "http://10.210.32.22:8080"
+    $JOB_URL = $jobUrl
+
+    # Create client with pre-emptive authentication
+    # see => http://www.hashemian.com/blog/2007/06/http-authorization-and-net-webrequest-webclient-classes.htm
+    $webClient = new-object System.Net.WebClient
+    $webclient.Headers.Add("Authorization", "Basic " +
+        [System.Convert]::ToBase64String(
+            [System.Text.Encoding]::ASCII.GetBytes("$($UserName):$JenkinsAPIToken")))
+
+    # fetch CSRF token as authenticated user
+    # see => https://wiki.jenkins-ci.org/display/JENKINS/Remote+access+API
+    $crumbURL = $JENKINS_URL + "/crumbIssuer/api/xml"
+    $crumbs = [xml]$webClient.DownloadString($crumbURL)
+
+    # set the CSRF token in the headers
+    $webclient.Headers.Add($crumbs.defaultCrumbIssuer.crumbRequestField, $crumbs.defaultCrumbIssuer.crumb)
+
+    # GET the job configuration (you don't actually need the CSRF token for this
+    # but it's better to get that token once at the top in case you want to do multiple
+    # operations e.g. setting parameters on many jobs, in this script)
+    $configURL = $JOB_URL + "/config.xml"
+    $config = [xml]$webClient.DownloadString($configURL)
+
+    # do whatever transformation you need to the XML
+
+    $config
+}
+
 $userData = Get-UserLdapAndHostname  #Array[0] = LDAP , Array[1] = hostname
 $filePath = Set-FolderSavePath       #otomasyon klasörü yoksa olusturur varsa otomasyon-yeni adinda klasor olusturur.
 
@@ -56,13 +89,17 @@ $output = "$filePath\selenium-server-standalone-3.12.0.jar"
 (New-Object System.Net.WebClient).DownloadFile($SeleniumJarUrl, $output)
 
 #Java 8 indirilir.
-$java8Url = "https://javadl.oracle.com/webapps/download/AutoDL?BundleId=239858_230deb18db3e4014bb8e3e8324f81b43"
-$output = "$filePath\jre-8u221-windows-x64.exe"
-(New-Object System.Net.WebClient).DownloadFile($java8Url, $output)
+#$java8Url = "https://javadl.oracle.com/webapps/download/AutoDL?BundleId=239858_230deb18db3e4014bb8e3e8324f81b43"
+#$output = "$filePath\jre-8u221-windows-x64.exe"
+#(New-Object System.Net.WebClient).DownloadFile($java8Url, $output)
 #Java 8 kurulur.
-Start-Process $output -Args '/s INSTALL_SILENT=1 STATIC=0 AUTO_UPDATE=0 WEB_JAVA=1 WEB_JAVA_SECURITY_LEVEL=H WEB_ANALYTICS=0 EULA=0 REBOOT=0 NOSTARTMENU=0 SPONSORS=0 /L "$env:TEMP\jre-8u45-windows-x64.log"'
+##Start-Process $output -Args '/s INSTALL_SILENT=1 STATIC=0 AUTO_UPDATE=0 WEB_JAVA=1 WEB_JAVA_SECURITY_LEVEL=H WEB_ANALYTICS=0 EULA=0 REBOOT=0 NOSTARTMENU=0 SPONSORS=0 /L "$env:TEMP\jre-8u45-windows-x64.log"'
 
-Remove-Item $output -Force
+#Remove-Item $output -Force
+
+$jobRequest = "$userData[0]_QaSelenium"
+
+$jobResponse = Request-JenkinsXml($jobRequest)
 
 # Get current config Jenkins
 ###curl -X GET http://MAYA10:113aea2aae91d13fbed3fba5f9d15eab0c@localhost:8080/job/test/config.xml -o mylocalconfig.xml
