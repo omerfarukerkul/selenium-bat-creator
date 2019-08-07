@@ -88,12 +88,12 @@ $SeleniumJarUrl = "https://selenium-release.storage.googleapis.com/3.12/selenium
 $output = "$filePath\selenium-server-standalone-3.12.0.jar"
 (New-Object System.Net.WebClient).DownloadFile($SeleniumJarUrl, $output)
 
-#Java 8 indirilir.
-#$java8Url = "https://javadl.oracle.com/webapps/download/AutoDL?BundleId=239858_230deb18db3e4014bb8e3e8324f81b43"
-#$output = "$filePath\jre-8u221-windows-x64.exe"
-#(New-Object System.Net.WebClient).DownloadFile($java8Url, $output)
-#Java 8 kurulur.
-##Start-Process $output -Args '/s INSTALL_SILENT=1 STATIC=0 AUTO_UPDATE=0 WEB_JAVA=1 WEB_JAVA_SECURITY_LEVEL=H WEB_ANALYTICS=0 EULA=0 REBOOT=0 NOSTARTMENU=0 SPONSORS=0 /L "$env:TEMP\jre-8u45-windows-x64.log"'
+#Java 8 indirilir ve kurulur.
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$URL=(Invoke-WebRequest -UseBasicParsing https://www.java.com/en/download/manual.jsp).Content | %{[regex]::matches($_, '(?:<a title="Download Java software for Windows Online" href=")(.*)(?:">)').Groups[1].Value}
+Invoke-WebRequest -UseBasicParsing -OutFile jre8.exe $URL
+Start-Process .\jre8.exe '/s REBOOT=0 SPONSORS=0 AUTO_UPDATE=0' -wait
+echo $?
 
 #Remove-Item $output -Force
 
