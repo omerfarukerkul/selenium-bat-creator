@@ -125,31 +125,41 @@ function Setup-Java([string] $filePath) {
     $?
 }
 
-Write-Host "Kullanici Bilgileri aliniyor..."
+function Get-TimeStamp {
+    
+    return "[{0:MM/dd/yy} {0:HH:mm:ss}]" -f (Get-Date)
+    
+}
+
+$filePath = Set-FolderSavePath       #otomasyon klasörü olusturur
+Write-Host "$(Get-TimeStamp) Masaustune otomasyon klasoru olusturuldu..."
+
+Write-Host "$(Get-TimeStamp) Kullanici Bilgileri aliniyor..."
 $userData = Get-UserLdapAndHostname  #Array[0] = LDAP , Array[1] = hostname
 $userLdap = $userData[0]
 $userHostName = $userData[1]
 $jobRequest = "EXT0248898"  #$userLdap`_QaSelenium
 
 $jobResponse = Request-JenkinsXml $jobRequest $userHostName
-Write-Host "Jenkins bilgileri ayarlandi..."
-
-$filePath = Set-FolderSavePath       #otomasyon klasörü olusturur
-Write-Host "Masaustune otomasyon klasoru olusturuldu..."
+Write-Host "$(Get-TimeStamp) Jenkins bilgileri ayarlandi..."
 
 $hasDownloaded = Download-ChromeDriver($filePath)
-Write-Host "Latest chrome driver indirildi..."
+Write-Host "$(Get-TimeStamp) Latest chrome driver indirildi..."
 
 $batText = Write-BatFile($filePath)
-Write-Host "Bat dosyasi yazildi..."
+Write-Host "$(Get-TimeStamp) Bat dosyasi yazildi..."
 
 #Java 8 yüklü değilse yükle.
 if (!((Get-Command java | Select-Object -ExpandProperty Version).tostring() -match "^8.0")) {
     $setupJava = Setup-Java($filePath)
-    Write-Host "Java version 8 yuklendi..."
+    Write-Host "$(Get-TimeStamp) Java version 8 yuklendi..."
 }
 
-Write-Host "Selenium jar indiriliyor lutfen bekleyin..."
+Write-Host "$(Get-TimeStamp) Selenium jar indiriliyor lutfen bekleyin..."
 $downloadSeleniumJar = Download-SeleniumJar($filePath)
-Write-Host "Selenium jar indirildi..."
-Write-Host "Tum isleler basariyla tamamlandi..."
+if($downloadSeleniumJar){
+Write-Host "$(Get-TimeStamp) Selenium jar indirildi..."
+Write-Host "$(Get-TimeStamp) Tum isleler basariyla tamamlandi..."
+}else{
+Write-Host "$(Get-TimeStamp) Selenium jar indirilemedi program yoneticisine basvurun..."
+}
