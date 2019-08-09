@@ -13,12 +13,12 @@ function Get-UserLdapAndHostname {
     $data = $env:USERNAME, $hostname
     $data
 }
-function Request-JenkinsXml([string] $jobUrl,[string] $hostname) {
+function Request-JenkinsXml([string] $userLdap,[string] $hostname) {
     # Fill in the blanks
     $UserName = "MAYA10"
     $JenkinsAPIToken = "116f76f5227da692c1167e670480576dfa"
     $JENKINS_URL = "http://10.210.32.22:8080"
-    $JOB_URL = $JENKINS_URL + "/job/" + $jobUrl + "`_QaSelenium"
+    $JOB_URL = $JENKINS_URL + "/job/" + $userLdap + "`_QaSelenium"
 
     # Create client with pre-emptive authentication
     # see => http://www.hashemian.com/blog/2007/06/http-authorization-and-net-webrequest-webclient-classes.htm
@@ -70,14 +70,13 @@ function Request-JenkinsXml([string] $jobUrl,[string] $hostname) {
     
     $config
 }
-
 function Write-BatFile([string] $filePath) {
     
     ##Bat dosyasi yazdir.
     $text = 'SETLOCAL
     SET JAVA_TOOL_OPTIONS=
     SET _JAVA_OPTIONS=
-    java -Dwebdriver.chrome.driver=chromedriver.exe -jar selenium-server-standalone-3.12.0.jar -port 1453 -role node -hub http://10.210.32.15:4444/grid/register -browser "browserName=chrome, version=ANY, maxInstances=10, platform=WINDOWS"
+    java -Dwebdriver.chrome.driver=\`"chromedriver.exe\`" -jar selenium-server-standalone-3.12.0.jar -role node -port 1453 -hub http://10.210.32.53:4444/grid/register
     if  %ERRORLEVEL% == 1 pause
     ENDLOCAL'
     
@@ -125,18 +124,30 @@ function Setup-Java([string] $filePath) {
     Start-Process "$filePath\jre8.exe" '/s REBOOT=0 SPONSORS=0 AUTO_UPDATE=0' -Wait
     $?
 }
-
+Write-Host "User Bilgileri aliniyor..."
 $userData = Get-UserLdapAndHostname  #Array[0] = LDAP , Array[1] = hostname
+Write-Host "User Bilgileri alindi..."
 $userLdap = $userData[0]
 $userHostName = $userData[1]
-$jobRequest = $userLdap  #$userLdap`_QaSelenium
+$jobRequest = "EXT0248898"  #$userLdap`_QaSelenium
 $jobResponse = Request-JenkinsXml $jobRequest $userHostName
+Write-Host "Jenkins bilgileri ayarlandi..."
 
 $filePath = Set-FolderSavePath       #otomasyon klasörü olusturur
+Write-Host "Masaustune otomasyon klasoru olusturuldu..."
+
 $hasDownloaded = Download-ChromeDriver($filePath)
+Write-Host "Latest chrome driver indirildi..."
+
 $batText = Write-BatFile($filePath)
+Write-Host "Bat dosyasi yazildi..."
+
 #Java 8 yüklü değilse yükle.
 if (!((Get-Command java | Select-Object -ExpandProperty Version).tostring() -match "^8.0")) {
     $setupJava = Setup-Java($filePath)
+    Write-Host "Java version 8 yuklendi..."
 }
+Write-Host "Selenium jar indiriliyor lutfen bekleyin..."
 $downloadSeleniumJar = Download-SeleniumJar($filePath)
+Write-Host "Selenium jar indirildi..."
+Write-Host "Tum isleler basariyla tamamlandi..."
