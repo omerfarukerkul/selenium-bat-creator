@@ -124,12 +124,13 @@ function Setup-Java([string] $filePath) {
     Start-Process "$filePath\jre8.exe" '/s REBOOT=0 SPONSORS=0 AUTO_UPDATE=0' -Wait
     $?
 }
-Write-Host "User Bilgileri aliniyor..."
+
+Write-Host "Kullanici Bilgileri aliniyor..."
 $userData = Get-UserLdapAndHostname  #Array[0] = LDAP , Array[1] = hostname
-Write-Host "User Bilgileri alindi..."
 $userLdap = $userData[0]
 $userHostName = $userData[1]
 $jobRequest = "EXT0248898"  #$userLdap`_QaSelenium
+
 $jobResponse = Request-JenkinsXml $jobRequest $userHostName
 Write-Host "Jenkins bilgileri ayarlandi..."
 
@@ -147,6 +148,7 @@ if (!((Get-Command java | Select-Object -ExpandProperty Version).tostring() -mat
     $setupJava = Setup-Java($filePath)
     Write-Host "Java version 8 yuklendi..."
 }
+
 Write-Host "Selenium jar indiriliyor lutfen bekleyin..."
 $downloadSeleniumJar = Download-SeleniumJar($filePath)
 Write-Host "Selenium jar indirildi..."
