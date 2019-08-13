@@ -124,7 +124,6 @@ function Setup-Java([string] $filePath) {
     Start-Process "$filePath\jre8.exe" '/s REBOOT=0 SPONSORS=0 AUTO_UPDATE=0' -Wait
     $?
 }
-
 function Get-TimeStamp {
     
     return "[{0:MM/dd/yy} {0:HH:mm:ss}]" -f (Get-Date)
@@ -159,7 +158,6 @@ Write-Host "$(Get-TimeStamp) Selenium jar indiriliyor lutfen bekleyin..."
 $downloadSeleniumJar = Download-SeleniumJar($filePath)
 if($downloadSeleniumJar){
 Write-Host "$(Get-TimeStamp) Selenium jar indirildi..."
-Write-Host "$(Get-TimeStamp) Tum islemler basariyla tamamlandi..."
 }else{
 Write-Host "$(Get-TimeStamp) Selenium jar indirilemedi program yoneticisine basvurun..."
 }
