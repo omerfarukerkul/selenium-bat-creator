@@ -76,7 +76,7 @@ function Write-BatFile([string] $filePath) {
     $text = 'SETLOCAL
     SET JAVA_TOOL_OPTIONS=
     SET _JAVA_OPTIONS=
-    java -Dwebdriver.chrome.driver=\`"chromedriver.exe\`" -jar selenium-server-standalone-3.12.0.jar -role node -port 1453 -hub http://10.210.32.53:4444/grid/register
+    java -Dwebdriver.chrome.driver=chromedriver.exe -jar selenium-server-standalone-3.12.0.jar -role node -port 1453 -hub http://10.210.32.53:4444/grid/register -browser "browserName=chrome, version=ANY, maxInstances=10, platform=WINDOWS"
     if  %ERRORLEVEL% == 1 pause
     ENDLOCAL'
     
