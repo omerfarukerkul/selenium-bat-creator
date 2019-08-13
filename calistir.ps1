@@ -152,7 +152,7 @@ Write-Host "$(Get-TimeStamp) Bat dosyasi yazildi..."
 #Java 8 yüklü değilse yükle.
 if (!((Get-Command java | Select-Object -ExpandProperty Version).tostring() -match "^8.0")) {
     $setupJava = Setup-Java($filePath)
-    Write-Host "$(Get-TimeStamp) Java version 8 yuklendi..."
+    Write-Host "$(Get-TimeStamp) Java versiyon 8 basariyla yuklendi..."
 }
 
 Write-Host "$(Get-TimeStamp) Selenium jar indiriliyor lutfen bekleyin..."
