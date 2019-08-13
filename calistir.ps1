@@ -159,7 +159,7 @@ Write-Host "$(Get-TimeStamp) Selenium jar indiriliyor lutfen bekleyin..."
 $downloadSeleniumJar = Download-SeleniumJar($filePath)
 if($downloadSeleniumJar){
 Write-Host "$(Get-TimeStamp) Selenium jar indirildi..."
-Write-Host "$(Get-TimeStamp) Tum isleler basariyla tamamlandi..."
+Write-Host "$(Get-TimeStamp) Tum islemler basariyla tamamlandi..."
 }else{
 Write-Host "$(Get-TimeStamp) Selenium jar indirilemedi program yoneticisine basvurun..."
 }
