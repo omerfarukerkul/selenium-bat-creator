@@ -39,32 +39,33 @@ function Request-JenkinsXml([string] $userLdap,[string] $hostname) {
     # but it's better to get that token once at the top in case you want to do multiple
     # operations e.g. setting parameters on many jobs, in this script)
     $configURL = $JOB_URL + "/config.xml"
+    $webClient.Encoding = [System.Text.Encoding]::UTF8
     $configResponse = $webClient.DownloadString($configURL)
     $config = [xml]$configResponse.Replace('<?xml version=''1.1'' encoding=''UTF-8''?>', '<?xml version=''1.0'' encoding=''UTF-8''?>')
 
-    $config.'maven2-moduleset'.properties.'hudson.model.ParametersDefinitionProperty'.parameterDefinitions.'org.biouno.unochoice.CascadeChoiceParameter'.script.secureScript.script = '
-    def displayGridList=[]
-    if(remoteRunner.equals("true")){
-    
-    displayGridList.add("http://'+$hostname+':1453/wd/hub")
-    }
-    
-    return displayGridList'
+    $config.'maven2-moduleset'.properties.'hudson.model.ParametersDefinitionProperty'.parameterDefinitions.'org.biouno.unochoice.CascadeChoiceParameter'.script.secureScript.script = 
+    '
+def displayGridList=[]
+if(remoteRunner.equals("true")){
+
+displayGridList.add("http://'+$hostname+':1453/wd/hub")
+}
+return displayGridList'
     # do whatever transformation you need to the XML
 
     # POST back
     # see => http://stackoverflow.com/questions/5401501/how-to-post-data-to-specific-url-using-webclient-in-c-sharp
     
-<#     try {
+     try {
         $webClient.Encoding = [System.Text.Encoding]::UTF8
-        $webclient.Headers.Add([System.Net.HttpRequestHeader]::ContentType, "application/xml")
+        $webclient.Headers.Add([System.Net.HttpRequestHeader]::ContentType, "text/html;charset=UTF-8")
         $webclient.UploadString($configURL, $config.OuterXml)
     } 
     finally {
         ## reset headers for client re-use if you're processing many jobs
         ## (or .Dispose() the client if you're done)
         $webClient.Headers.Remove([System.Net.HttpRequestHeader]::ContentType)
-    } #>
+    } 
 
     
     $config
