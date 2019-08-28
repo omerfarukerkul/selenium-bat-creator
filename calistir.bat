@@ -1,1 +1,1 @@
-PowerShell.exe -Command "& {Start-Process PowerShell.exe -ArgumentList '-ExecutionPolicy Bypass -File ""%~dpn0.ps1""' -Verb RunAs}"
+Powershell.exe -Command "& {Start-Process PowerShell.exe -ArgumentList '-executionpolicy remotesigned -File  ""%~dpn0.ps1""' }"
