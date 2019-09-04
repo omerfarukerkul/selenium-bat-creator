@@ -138,7 +138,7 @@ function Setup-Java([string] $filePath) {
 }
 function Get-TimeStamp {
     
-    return "[{0:MM/dd/yy}_{0:HH:mm:ss}]" -f (Get-Date)
+    return "[{0:dd/MM/yy} {0:HH:mm:ss}]" -f (Get-Date)
     
 }
 
