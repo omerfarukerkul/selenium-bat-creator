@@ -2,7 +2,8 @@ Clear-Host
 
 #masaustunde yeni klasor olusturup icerisine cd ile gidilir.
 function Set-FolderSavePath {
-    $browse = "$HOME\Desktop\otomasyon"
+    $timestamp = Get-DateFormat
+    $browse = ("$HOME\Desktop\otomasyon-selenium-bat-$timestamp") 
     New-Item -Type directory -Path $browse -Force | Out-Null
     Set-Location -Path $browse
     $browse
@@ -137,7 +138,13 @@ function Setup-Java([string] $filePath) {
 }
 function Get-TimeStamp {
     
-    return "[{0:MM/dd/yy} {0:HH:mm:ss}]" -f (Get-Date)
+    return "[{0:MM/dd/yy}_{0:HH:mm:ss}]" -f (Get-Date)
+    
+}
+
+function Get-DateFormat {
+    
+    return "{0:MM_dd_yy}" -f (Get-Date)
     
 }
 
