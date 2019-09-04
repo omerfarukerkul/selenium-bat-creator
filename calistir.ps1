@@ -219,36 +219,47 @@ function Get-FileFromURL {
     }
 }
 
-$filePath = Set-FolderSavePath       #otomasyon klasörü olusturur
-Write-Host "$(Get-TimeStamp) Masaustune otomasyon klasoru olusturuldu..."
+function Log-Host([string] $log) {
+    Write-Host $log
+    $log | Out-File -FilePath ".\log.log" -Encoding utf8 -Append
+}
 
-Write-Host "$(Get-TimeStamp) Kullanici Bilgileri aliniyor..."
+$filePath = Set-FolderSavePath       #otomasyon klasörü olusturur
+Log-Host "$(Get-TimeStamp) Masaustune otomasyon klasoru olusturuldu..."
+
+Log-Host "$(Get-TimeStamp) Kullanici Bilgileri aliniyor..."
 $userData = Get-UserLdapAndHostname  #Array[0] = LDAP , Array[1] = hostname
 $userLdap = $userData[0]
 $userHostName = $userData[1]
 $jobRequest = $userLdap  #$userLdap`_QaSelenium
 
 $jobResponse = Request-JenkinsXml $jobRequest $userHostName
-Write-Host "$(Get-TimeStamp) Jenkins bilgileri ayarlandi..."
+Log-Host "$(Get-TimeStamp) Jenkins bilgileri ayarlandi..."
 
 $hasDownloaded = Download-ChromeDriver $filePath
-Write-Host "$(Get-TimeStamp) Latest chrome driver indirildi..."
+Log-Host "$(Get-TimeStamp) Latest chrome driver indirildi..."
 
 $batText = Write-BatFile $filePath
-Write-Host "$(Get-TimeStamp) Bat dosyasi yazildi..."
+Log-Host "$(Get-TimeStamp) Bat dosyasi yazildi..."
 
 #Java 8 yüklü değilse yükle.
 if (!((Get-Command java | Select-Object -ExpandProperty Version).tostring() -match "^8.0")) {
     $setupJava = Setup-Java $filePath
-    Write-Host "$(Get-TimeStamp) Java versiyon 8 basariyla yuklendi..."
+    Log-Host "$(Get-TimeStamp) Java versiyon 8 basariyla yuklendi..."
 }
 
-Write-Host "$(Get-TimeStamp) Selenium jar indiriliyor lutfen bekleyin..."
+Log-Host "$(Get-TimeStamp) Selenium jar indiriliyor lutfen bekleyin..."
 $downloadSeleniumJar = Download-SeleniumJar $filePath
 if ($downloadSeleniumJar) {
-    Write-Host "$(Get-TimeStamp) Selenium jar indirildi..."
+    Log-Host "$(Get-TimeStamp) Selenium jar indirildi..."
 }
 else {
-    Write-Host "$(Get-TimeStamp) Selenium jar indirilemedi program yoneticisine basvurun..."
+    Log-Host "$(Get-TimeStamp) Selenium jar indirilemedi program yoneticisine basvurun..."
 }
+[System.Collections.ArrayList]$ArrayList = "", ""
+for ($i = 0; $i -lt "$(Get-TimeStamp) Selenium jar indirilemedi program yoneticisine basvurun...".Length; $i++) {
+    $ArrayList.Add("-") | Out-Null
+}
+$stringToEOF = $ArrayList -join ''
+Log-Host $stringToEOF
 explorer .
