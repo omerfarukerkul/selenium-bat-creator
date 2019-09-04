@@ -13,7 +13,7 @@ function Get-UserLdapAndHostname {
     $data = $env:USERNAME, $hostname
     $data
 }
-function Request-JenkinsXml([string] $userLdap,[string] $hostname) {
+function Request-JenkinsXml([string] $userLdap, [string] $hostname) {
     # Fill in the blanks
     $UserName = "MAYA10"
     $JenkinsAPIToken = "116f76f5227da692c1167e670480576dfa"
@@ -48,7 +48,7 @@ function Request-JenkinsXml([string] $userLdap,[string] $hostname) {
 def displayGridList=[]
 if(remoteRunner.equals("true")){
 
-displayGridList.add("http://'+$hostname+':1453/wd/hub")
+displayGridList.add("http://' + $hostname + ':1453/wd/hub")
 }
 return displayGridList'
     # do whatever transformation you need to the XML
@@ -56,7 +56,7 @@ return displayGridList'
     # POST back
     # see => http://stackoverflow.com/questions/5401501/how-to-post-data-to-specific-url-using-webclient-in-c-sharp
     
-     try {
+    try {
         $webClient.Encoding = [System.Text.Encoding]::UTF8
         $webclient.Headers.Add([System.Net.HttpRequestHeader]::ContentType, "text/html;charset=UTF-8")
         $webclient.UploadString($configURL, $config.OuterXml)
@@ -83,6 +83,9 @@ function Write-BatFile([string] $filePath) {
     $text
 }
 function Download-ChromeDriver([string] $filePath) {
+    if (Test-Path -Path "$filePath\chromedriver.exe") {
+        return 0;
+    }
     ##TODO Chrome Versiyonunun ogrenilmesi ve gereken formata getirilmesi.
     $chromeVersion = (Get-Item (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe').'(Default)').VersionInfo.ProductVersion
     $chromeVersion = $chromeVersion.ToCharArray()
@@ -109,6 +112,9 @@ function Download-ChromeDriver([string] $filePath) {
     $hasDownloaded
 }
 function Download-SeleniumJar([string] $filePath) {
+    if (Test-Path -Path "$filePath\selenium-server-standalone-3.12.0.jar") {
+        return 0;
+    }
     #Selenium jar dosyasi indirilir.
     $SeleniumJarUrl = "https://selenium-release.storage.googleapis.com/3.12/selenium-server-standalone-3.12.0.jar"
     $output = "$filePath\selenium-server-standalone-3.12.0.jar"
@@ -117,13 +123,17 @@ function Download-SeleniumJar([string] $filePath) {
     $?
 }
 function Setup-Java([string] $filePath) {
-    #Java 8 indirilir ve kurulur.
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    $URL = (Invoke-WebRequest -UseBasicParsing https://www.java.com/en/download/manual.jsp).Content | % { [regex]::matches($_, '(?:<a title="Download Java software for Windows [(]64-bit[)]" href=")(.*)(?:">)').Groups[1].Value }
-    Get-FileFromURL -URL $URL -Filename "$filePath\jre8.exe"
+    if ((Test-Path -Path "$filePath\jre8.exe") -eq "False") {
+        #Java 8 indirilir ve kurulur.
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        $URL = (Invoke-WebRequest -UseBasicParsing https://www.java.com/en/download/manual.jsp).Content | % { [regex]::matches($_, '(?:<a title="Download Java software for Windows [(]64-bit[)]" href=")(.*)(?:">)').Groups[1].Value }
+        Get-FileFromURL -URL $URL -Filename "$filePath\jre8.exe"
+    }
     #Invoke-WebRequest -UseBasicParsing -OutFile "$filePath\jre8.exe" $URL
     Start-Process "$filePath\jre8.exe" '/s REBOOT=0 SPONSORS=0 AUTO_UPDATE=0' -Wait
-    $?
+    $result = $?
+    Remove-Item -Path "$filePath\jre8.exe" -Force
+    $result
 }
 function Get-TimeStamp {
     
@@ -228,8 +238,10 @@ if (!((Get-Command java | Select-Object -ExpandProperty Version).tostring() -mat
 
 Write-Host "$(Get-TimeStamp) Selenium jar indiriliyor lutfen bekleyin..."
 $downloadSeleniumJar = Download-SeleniumJar $filePath
-if($downloadSeleniumJar){
-Write-Host "$(Get-TimeStamp) Selenium jar indirildi..."
-}else{
-Write-Host "$(Get-TimeStamp) Selenium jar indirilemedi program yoneticisine basvurun..."
+if ($downloadSeleniumJar) {
+    Write-Host "$(Get-TimeStamp) Selenium jar indirildi..."
 }
+else {
+    Write-Host "$(Get-TimeStamp) Selenium jar indirilemedi program yoneticisine basvurun..."
+}
+explorer .
